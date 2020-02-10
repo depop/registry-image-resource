@@ -285,10 +285,18 @@ func (source *Source) AuthenticateToECR() bool {
 		return false
 	}
 
-	mySession := session.Must(session.NewSession(&aws.Config{
-		Region:      aws.String(source.AwsRegion),
-		Credentials: credentials.NewStaticCredentials(source.AwsAccessKeyId, source.AwsSecretAccessKey, source.AwsSessionToken),
-	}))
+	var sessionConfig aws.Config
+	if source.AwsAccessKeyId != "" && source.AwsSecretAccessKey != "" {
+		sessionConfig = aws.Config{
+			Region:      aws.String(source.AwsRegion),
+			Credentials: credentials.NewStaticCredentials(source.AwsAccessKeyId, source.AwsSecretAccessKey, ""),
+		}
+	} else {
+		sessionConfig = aws.Config{
+			Region: aws.String(source.AwsRegion),
+		}
+	}
+	mySession := session.Must(session.NewSession(&sessionConfig))
 
 	// Note: This implementation gives precedence to `aws_role_arn` since it
 	// assumes that we've errored if both `aws_role_arn` and `aws_role_arns`
